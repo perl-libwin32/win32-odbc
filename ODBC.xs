@@ -46,8 +46,6 @@ extern "C" {
 #include "perl.h"
 #include "XSub.h"
 
-#include "ppport.h"
-
 #if defined(__cplusplus)
 }   
 #endif
