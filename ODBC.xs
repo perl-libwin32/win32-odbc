@@ -2333,13 +2333,8 @@ XS(XS_WIN32__ODBC_GetSQLState)
 
     SP -= items;
 
-    if (h->Error->szSqlState){
-        XPUSHs(sv_2mortal(newSVnv((double)0)));
-        XPUSHs(sv_2mortal(newSVpv((char *)h->Error->szSqlState, strlen((const char *) h->Error->szSqlState))));
-    }else{
-            //  Report the error
-        ReturnError(h);
-    }
+    XPUSHs(sv_2mortal(newSVnv((double)0)));
+    XPUSHs(sv_2mortal(newSVpv((char *)h->Error->szSqlState, strlen((const char *) h->Error->szSqlState))));
 
     PUTBACK;
 }
