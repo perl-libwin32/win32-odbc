@@ -578,6 +578,15 @@ int DeleteConn(int iODBC){
     return iResult;         
 }
 
+//  Delete a connection that failed to open, and return the thread's default
+//  object with the connection's error copied to it.
+ODBC_TYPE *DropFailedConn(ODBC_TYPE *h){
+    ODBC_TYPE *hDefault = ODBCLIST;
+
+    *hDefault->Error = *h->Error;
+    DeleteConn(h->conn);
+    return hDefault;
+}
 
 
 
@@ -665,16 +674,14 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
             h->hdbc->iConnected = 0;
             h->hdbc->iCount = 1;    //  Set the count to include this particular instance
         }else{
-            _NT_ODBC_Error(h, "ODBC_Connect could not allocate memory for an HDBC connection", "1a");
-            DeleteConn(h->conn);
+            ODBCError("Could not allocate memory for an HDBC connection", h, "ODBC_Connect", "1a");
         }
     
         if (!h->Error->ErrNum){
             retcode = SQLAllocConnect(h->henv, &h->hdbc->hdbc);
             if (retcode != SQL_SUCCESS)
             {
-                _NT_ODBC_Error((ODBC_TYPE*)0, "ODBC_Connect", "2");
-                DeleteConn(h->conn);
+                _NT_ODBC_Error(h, "ODBC_Connect", "2");
             }
         }
         if (!h->Error->ErrNum){
@@ -706,17 +713,10 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
             retcode = SQLDriverConnect(h->hdbc->hdbc, (HWND) NULL, (unsigned char *)szDSN, strlen(szDSN), buff, ODBC_BUFF_SIZE, (short *)&bufflenout, SQL_DRIVER_NOPROMPT);
             if (retcode != SQL_SUCCESS && retcode != SQL_SUCCESS_WITH_INFO){
                 _NT_ODBC_Error(h, "ODBC_Connect", "4");
-                strcpy(ODBCLIST->Error->szError, h->Error->szError);
-                strcpy((char *)ODBCLIST->Error->szSqlState, (char *)h->Error->szSqlState);
-                strcpy(ODBCLIST->Error->szFunction, h->Error->szFunction);
-                strcpy(ODBCLIST->Error->szFunctionLevel, h->Error->szFunctionLevel);
                     //  If connection fails it does not genereate an error num. Hmmm...
                 if(! h->Error->ErrNum){
                     h->Error->ErrNum = 911;
                 }
-                ODBCLIST->Error->ErrNum = h->Error->ErrNum;
-                DeleteConn(h->conn);
-                h = ODBCLIST;
             }else{
                 h->hdbc->iConnected = 1;
                 if ((h->szDSN = new char [strlen((const char *)buff) + 1])){
@@ -730,10 +730,10 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
             }
         }
         if (!h->Error->ErrNum){
-            retcode = ResetStmt(h);
-            if (retcode != SQL_SUCCESS){
-                DeleteConn(h->conn);
-            }
+            ResetStmt(h);
+        }
+        if (h->Error->ErrNum){
+            h = DropFailedConn(h);
         }
     }
     if (!h->Error->ErrNum){ // everything is happy
@@ -2286,7 +2286,6 @@ XS(XS_WIN32__ODBC_Clone) // ODBC_Connect(Connection string: input) returns conne
 {
     dXSARGS;
     ODBC_TYPE   *h, *hOld = 0;
-    RETCODE retcode;           // Misc ODBC sh!t
 
     if(items != 1){
             //  We need at least 1 (DSN) entry. If more then we need them in pairs of
@@ -2312,14 +2311,13 @@ XS(XS_WIN32__ODBC_Clone) // ODBC_Connect(Connection string: input) returns conne
         }else{
             _NT_ODBC_Error(h, "ODBC_Clone", "2");
             h->Error->ErrNum = 0;
-            DeleteConn(h->conn);
         }
-    }
 
-    if (!h->Error->ErrNum){
-        retcode = ResetStmt(h);
-        if (retcode != SQL_SUCCESS){
-            DeleteConn(h->conn);
+        if (!h->Error->ErrNum){
+            ResetStmt(h);
+        }
+        if (h->Error->ErrNum){
+            h = DropFailedConn(h);
         }
     }
     if (!h->Error->ErrNum){ // everything is happy

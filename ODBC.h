@@ -141,6 +141,7 @@ ODBC_TYPE * _NT_ODBC_Verify(int iODBC);
 CMom *ThreadDaughter();
 ODBC_TYPE *ODBCError(const char *szString, ODBC_TYPE *h, const char *szFunction, const char *szFunctionLevel);
 int DeleteConn(int iODBC);
+ODBC_TYPE *DropFailedConn(ODBC_TYPE *h);
 void _NT_ODBC_Error(ODBC_Conn * h, const char *szFunction, const char *szFunctionLevel);
 int FreeODBC(ODBC_TYPE *h);
 RETCODE ResetStmt(ODBC_TYPE *h);
