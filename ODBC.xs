@@ -64,7 +64,7 @@ extern "C" {
 
 extern  CMOM *cMom;
 
-RETCODE TableColList(pTHX_ int iType);
+RETCODE TableColList(pTHX_ I32 ax, I32 items, int iType);
 
 /*----------------------- P E R L   F U N C T I O N S -------------------*/
 
@@ -639,7 +639,7 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
         strcat(szDSN, ";");
     }
 
-    PUSHMARK(sp);
+    SP -= items;
 
             //  Allocate new ODBC connection
     if (!(h = NewODBC())){
@@ -753,7 +753,7 @@ XS(XS_WIN32__ODBC_Execute) // ODBC_Execute($connection, $sql_text) returns (0,@f
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h != ODBCLIST){
         szSQL = SvPV(ST(1), n_a);            // get SQL string
@@ -828,7 +828,7 @@ XS(XS_WIN32__ODBC_Fetch) // ODBC_Fetch($connection) returns (0,@dataelements) or
         uType = (UWORD)SvIV(ST(2));
     }
                      
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h != ODBCLIST){
         SQLGetStmtOption(h->hstmt, SQL_ROWSET_SIZE, &dRowSetSize);
@@ -883,7 +883,7 @@ XS(XS_WIN32__ODBC_GetError)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
 
-    PUSHMARK(sp);
+    SP -= items;
     XPUSHs(sv_2mortal(newSVnv((double)h->Error->ErrNum)));
     XPUSHs(sv_2mortal(newSVpv(h->Error->szError, strlen(h->Error->szError))));
     XPUSHs(sv_2mortal(newSVpv((char *)h->Error->szSqlState, strlen(( const char *) h->Error->szSqlState))));
@@ -908,7 +908,7 @@ XS(XS_WIN32__ODBC_Disconnect) // usage: ODBC_Disconnect($conn) or ODBC_Disconnec
     }else{
         conn = SvIV(ST(0));
     }
-    PUSHMARK(sp);
+    SP -= items;
     if (!(iResult = DeleteConn(conn))){
         h = ODBCError("No such connection", (ODBC_TYPE*) 0, "ODBC_Disconnect", "1");
     
@@ -942,7 +942,7 @@ XS(XS_WIN32__ODBC_TableList) // ODBC_TableList($connection) returns (0,@TableNam
         CROAK("usage: ($Err,@ColumnNames) = ODBC_TableList($connection, $Qualifier, $Owner, $TableName, $TableType)\n");
     }
 
-    retcode = TableColList(aTHX_ 0);
+    retcode = TableColList(aTHX_ ax, items, 0);
 }
 
 XS(XS_WIN32__ODBC_ColumnList)
@@ -954,11 +954,13 @@ XS(XS_WIN32__ODBC_ColumnList)
         CROAK("usage: ($Err,@ColumnNames) = ODBC_ColumnList($connection, $Qualifier, $Owner, $TableName, $ColumnName)\n");
     }
 
-    retcode = TableColList(aTHX_ 1);
+    retcode = TableColList(aTHX_ ax, items, 1);
 }
 
-RETCODE TableColList(pTHX_ int iType){
-    dXSARGS;
+RETCODE TableColList(pTHX_ I32 ax, I32 items, int iType){
+        //  The calling XSUB has already popped the mark, so take its ax and items
+        //  instead of popping another one with dXSARGS.
+    dSP;
     ODBC_TYPE * h;
     int    iTemp;
     UCHAR  buff2[ODBC_BUFF_SIZE];
@@ -998,7 +1000,7 @@ RETCODE TableColList(pTHX_ int iType){
         }
     }
     
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h != ODBCLIST){
         CleanError(h->Error);
@@ -1076,7 +1078,7 @@ XS(XS_WIN32__ODBC_MoreResults)  // usage: ODBC_MoreResults($conn)
  
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
     if (h != ODBCLIST){
         retcode = SQLMoreResults(h->hstmt);
         if((retcode != SQL_SUCCESS) && (retcode != SQL_SUCCESS_WITH_INFO)){
@@ -1109,7 +1111,7 @@ XS(XS_WIN32__ODBC_MaxBufSize)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h != ODBCLIST){
         if (items > 1){
@@ -1139,7 +1141,7 @@ XS(XS_WIN32__ODBC_GetConnections)
     if(items){
         CROAK("usage: (@ConnectionList) = ODBC_GetConnections()\n");
     }
-    PUSHMARK(sp);
+    SP -= items;
 
     for (iTemp = cmDaughter->TotalElements(); iTemp; iTemp--){
         h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iTemp - 1);
@@ -1188,7 +1190,7 @@ XS(XS_WIN32__ODBC_GetDSN)
         }
     }
 
-    PUSHMARK(sp);
+    SP -= items;
 
     szTemp = szDSN;
     if (! (szDSN = new char [strlen(szTemp) + 1])){
@@ -1262,7 +1264,7 @@ XS(XS_WIN32__ODBC_DataSources)
         }
     }
 
-    PUSHMARK(sp);
+    SP -= items;
 
     *szDSN = *szDesc = '\0';
     retcode= SQLDataSources(h->henv, SQL_FETCH_FIRST, szDSN, SQL_MAX_DSN_LENGTH + 1, &pcbDSN, szDesc, DS_DESCRIPTION_LENGTH, &pcbDesc);
@@ -1302,7 +1304,7 @@ XS(XS_WIN32__ODBC_Drivers)
     }
     
     h = ODBCLIST;
-    PUSHMARK(sp);
+    SP -= items;
     
     *szDesc = *szAttr = '\0';
     retcode = SQLDrivers(h->henv, SQL_FETCH_FIRST, szDesc, DS_DESCRIPTION_LENGTH, &cbDesc, szAttr, DS_DESCRIPTION_LENGTH, &cbAttr);
@@ -1341,7 +1343,7 @@ XS(XS_WIN32__ODBC_RowCount)
     
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
     
     retcode = SQLRowCount(h->hstmt, &sdRows);
     if(retcode == SQL_SUCCESS){
@@ -1364,7 +1366,7 @@ XS(XS_WIN32__ODBC_Info)
         CROAK("usage: ($ExtName, $Version, $Date, $Author, $CompileDate, $Credits, $Comments) = Info()\n");
     }
     
-    PUSHMARK(sp);
+    SP -= items;
     
     XPUSHs(sv_2mortal(newSVpv(VERNAME, strlen(VERNAME))));
     XPUSHs(sv_2mortal(newSVpv(VERSION, strlen(VERSION))));
@@ -1390,7 +1392,7 @@ XS(XS_WIN32__ODBC_GetStmtCloseType)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
     
     if (!(szType = MapCloseType(h->uStmtCloseType))){
         ODBCError("Invalid Statment Close Type", h, "ODBC_GetStmtCloseType", "1");
@@ -1419,7 +1421,7 @@ XS(XS_WIN32__ODBC_SetStmtCloseType)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     uType = (UWORD)SvIV(ST(1));
-    PUSHMARK(sp);
+    SP -= items;
 
     switch(uType){
         case SQL_DONT_CLOSE:
@@ -1470,7 +1472,7 @@ XS(XS_WIN32__ODBC_SetConnectOption)
     }else{
         udValue = (ULONG_PTR) SvPV(ST(2), n_a);
     }
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         rResult = SQLSetConnectOption(h->hdbc->hdbc, uType, udValue);
@@ -1507,7 +1509,7 @@ XS(XS_WIN32__ODBC_GetConnectOption)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     uOption = (UWORD)SvIV(ST(1));
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         memset(ucValue, 255, SQL_MAX_OPTION_STRING_LENGTH + 1);
@@ -1573,7 +1575,7 @@ XS(XS_WIN32__ODBC_StmtOption)
         }
     }
 
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         if(items < 3){
@@ -1639,7 +1641,7 @@ XS(XS_WIN32__ODBC_GetFunctions)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
 
     items--;
 
@@ -1702,7 +1704,7 @@ XS(XS_WIN32__ODBC_Transact)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     uType = (UWORD)SvIV(ST(1));
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         if(uType == SQL_ROLLBACK || uType == SQL_COMMIT){
@@ -1745,6 +1747,8 @@ XS(XS_WIN32__ODBC_ConfigDSN)
         CROAK("usage: ($Err, $Type) = ODBC_ConfigDSN($Connection, $Function, $Driver, @Attributes)\n");
     }
 
+        //  The attribute loop below counts items down, so drop the arguments first.
+    SP -= items;
     h = _NT_ODBC_Verify(SvIV(ST(iStack)));
     CleanError(h->Error);
     iStack++;
@@ -1787,7 +1791,6 @@ XS(XS_WIN32__ODBC_ConfigDSN)
         }
     }
 
-    PUSHMARK(sp);
         /*  
             As of now szAttributes contains the entire DSN
         */
@@ -1843,7 +1846,7 @@ XS(XS_WIN32__ODBC_GetInfo)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     uType = (UWORD)SvIV(ST(1));
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         while (!iFlag++){
@@ -1908,7 +1911,7 @@ XS(XS_WIN32__ODBC_CleanError)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     
-    PUSHMARK(sp);
+    SP -= items;
    
     CleanError(h->Error);
     XPUSHs(sv_2mortal(newSVnv((double)0)));
@@ -1938,7 +1941,7 @@ XS(XS_WIN32__ODBC_ColAttributes)
     szName = (unsigned char *) SvPV(ST(1), n_a);
     iType = (UWORD)SvIV(ST(2));
     
-    PUSHMARK(sp);
+    SP -= items;
    
     CleanError(h->Error);
     if (!h->Error->ErrNum){
@@ -2044,7 +2047,7 @@ XS(XS_WIN32__ODBC_ColAttributes)
         h->iDebug = (iDebug)? 1:0;
     }
     
-    PUSHMARK(sp);
+    SP -= items;
    
     if (!h->Error->ErrNum){
         XPUSHs(sv_2mortal(newSVnv((double)0)));
@@ -2079,7 +2082,7 @@ XS(XS_WIN32__ODBC_SetPos)
     if (items > 3){
         uLock   = (UWORD)SvIV(ST(3));
     }
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         rResult = SQLSetPos(h->hstmt, uRow, uOption, uLock);
@@ -2117,7 +2120,7 @@ XS(XS_WIN32__ODBC_GetData)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     
-    PUSHMARK(sp);
+    SP -= items;
     
 /*  HERE WE must figure whether to use SQLGetData() beause we are using
     SQLFetch() or since we are using SQLExtendedFetch() we are to just
@@ -2193,7 +2196,7 @@ XS(XS_WIN32__ODBC_DropCursor)
         uCloseSpecified = (UWORD)SvIV(ST(1));  
     }
     CleanError(h->Error);
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         uCloseType = h->uStmtCloseType;
@@ -2228,7 +2231,7 @@ XS(XS_WIN32__ODBC_CursorName)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
 
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         if (items > 1){
@@ -2284,7 +2287,7 @@ XS(XS_WIN32__ODBC_Clone) // ODBC_Connect(Connection string: input) returns conne
     }
     hOld = _NT_ODBC_Verify(SvIV(ST(0)));
 
-    PUSHMARK(sp);
+    SP -= items;
 
             //  Allocate new ODBC connection
     if (!(h = NewODBC())){
@@ -2333,7 +2336,7 @@ XS(XS_WIN32__ODBC_GetSQLState)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
 
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h->Error->szSqlState){
         XPUSHs(sv_2mortal(newSVnv((double)0)));
@@ -2372,7 +2375,7 @@ XS(XS_WIN32__ODBC_GetStats)
 
     h = _NT_ODBC_Verify( (items)? SvIV(ST(0)):0);
 
-    PUSHMARK(sp);
+    SP -= items;
 
     if (h && !(h->Error->ErrNum)){
         cDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId());
@@ -2452,7 +2455,7 @@ XS(XS_WIN32__ODBC_GetTypeInfo)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     sType = (SWORD)SvIV(ST(1));
-    PUSHMARK(sp);
+    SP -= items;
 
     if(!h->Error->ErrNum){
         if (ResetStmt(h) == SQL_SUCCESS){
