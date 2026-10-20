@@ -28,15 +28,16 @@
 #include <math.h>   // VC-5.0 brainmelt
 #include <windows.h>
 #include <stdio.h>
+#ifdef __CYGWIN__
+#   include <strings.h>
+#   define stricmp  strcasecmp
+#   define strnicmp strncasecmp
+#endif
     
     //  ODBC Stuff
-#ifdef __CYGWIN__
-#   include <iodbcinst.h>
-#else
-#   include <sql.h>
-#   include <sqlext.h>
-#   include <odbcinst.h>
-#endif
+#include <sql.h>
+#include <sqlext.h>
+#include <odbcinst.h>
     //  Win32 Perl Stuff
 #if defined(__cplusplus)
 extern "C" {
