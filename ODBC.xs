@@ -105,10 +105,7 @@ ODBC_TYPE *NewODBC(){
         DebugConnection("Creating a new ODBC object.", 0);
     }
 #endif
-    if (!(cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
-        cmDaughter = new CMom(GetCurrentThreadId());
-    }
-    if (cmDaughter){ 
+    if ((cmDaughter = ThreadDaughter())){
 
 #ifdef _DEBUG
         DEBUG_DUMP("NewODBC: Entering Critical Section gCS")
@@ -530,16 +527,31 @@ ODBC_TYPE * _NT_ODBC_Verify(int iODBC){
     CMom    *cmDaughter = 0;
     ODBC_TYPE *h = 0;
     
-    if(::cMom){
-//      EnterCriticalSection(&gCS);
-        if ((cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
-            if (!(h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iODBC))){
-                h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)0);
-            }
+//  EnterCriticalSection(&gCS);
+    if ((cmDaughter = ThreadDaughter())){
+        if (!(h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iODBC))){
+            h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)0);
         }
-//      LeaveCriticalSection(&gCS);
     }
+//  LeaveCriticalSection(&gCS);
     return (h);
+}
+
+//  Return this thread's daughter, creating it if ODBCShutDown() deleted it
+//  or this thread did not load the module.
+CMom *ThreadDaughter(){
+    CMom    *cmDaughter = 0;
+
+    if (::cMom){
+        cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId());
+    }
+    if (!cmDaughter){
+        InitExtension();
+        if (::cMom){
+            cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId());
+        }
+    }
+    return cmDaughter;
 }
 
     /*
@@ -550,7 +562,8 @@ int DeleteConn(int iODBC){
     ODBC_TYPE   *h = 0;
     int iResult = 0;
 
-    if(::cMom){
+//  ID 0 is the thread's default object, which error paths fall back to.
+    if(::cMom && iODBC){
         CMom    *cmDaughter = 0;
         if ((cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
             if ((h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iODBC))){
@@ -897,7 +910,7 @@ XS(XS_WIN32__ODBC_GetError)
 }
           
 
-XS(XS_WIN32__ODBC_Disconnect) // usage: ODBC_Disconnect($conn) or ODBC_Disconnect() for all
+XS(XS_WIN32__ODBC_Disconnect) // usage: ODBC_Disconnect($conn)
 {
     dXSARGS;
     ODBC_TYPE *h;
@@ -1134,14 +1147,15 @@ XS(XS_WIN32__ODBC_GetConnections)
     dXSARGS;
     int iTemp;
     ODBC_TYPE   *h;
-    CMom    *cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId());
+    CMom    *cmDaughter;
 
     if(items){
         CROAK("usage: (@ConnectionList) = ODBC_GetConnections()\n");
     }
     SP -= items;
 
-    for (iTemp = cmDaughter->TotalElements(); iTemp; iTemp--){
+    cmDaughter = ThreadDaughter();
+    for (iTemp = (cmDaughter)? cmDaughter->TotalElements():0; iTemp; iTemp--){
         h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iTemp - 1);
         if (h){
             XPUSHs(sv_2mortal(newSVnv((double)h->conn)));
@@ -2568,10 +2582,17 @@ int InitExtension(){
     if (! ::cMom){
         iRetCode = FALSE;
     }else{
-        if ((cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
-            h = (ODBC_TYPE*) cmDaughter->operator[]((DWORD)0);
+        if (!(cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
+            new CMom(GetCurrentThreadId());    //  Registers itself in ::cMom
+            cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId());
         }
-        if(!h || !cmDaughter){
+        if (cmDaughter){
+            h = (ODBC_TYPE*) cmDaughter->operator[]((DWORD)0);
+        }else{
+//          Without a daughter, NewODBC() would call back into this function.
+            iRetCode = FALSE;
+        }
+        if(cmDaughter && !h){
             
 #ifdef _DEBUG
             DebugConnection("     =========> Creating Gratuitous ODBC structure...", 0);
