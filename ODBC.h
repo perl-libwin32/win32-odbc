@@ -37,11 +37,12 @@
 #define	DEFAULT_STMT_CLOSE_TYPE		SQL_DROP
 
 //	Define ODBCList as a Macro for backward compatiblility.
-#define	THREAD_MOM	( (CMom *) ::cMom->operator[](GetCurrentThreadId()))
+#define	THREAD_MOM	(ThreadDaughter())
 #define	ODBCLIST	( (ODBC_TYPE *) (THREAD_MOM)->operator[]((DWORD)0))
 
 
 class CResults;
+class CMom;
 
 struct	ODBC_hdbc{
 	HDBC	hdbc;				//	Handle to the ODBC connection
@@ -137,6 +138,7 @@ struct	ODBC_Conn{
 ODBC_TYPE *NewODBC();
 ODBC_TYPE *CleanODBC(ODBC_TYPE *h);
 ODBC_TYPE * _NT_ODBC_Verify(int iODBC);
+CMom *ThreadDaughter();
 ODBC_TYPE *ODBCError(const char *szString, ODBC_TYPE *h, const char *szFunction, const char *szFunctionLevel);
 int DeleteConn(int iODBC);
 void _NT_ODBC_Error(ODBC_Conn * h, const char *szFunction, const char *szFunctionLevel);
