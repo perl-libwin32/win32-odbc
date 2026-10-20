@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Win32::ODBC;
 
 # The methods hide which values an XSUB returns, so call the XSUBs directly
@@ -22,3 +22,6 @@ is_deeply(\@usage, [1, 999, "usage: (\$Err, \$NumOfRows) = ODBC_RowCount(\$Conne
 @usage = (1, Win32::ODBC::ODBCGetConnections('extra'));
 is_deeply(\@usage, [1, 999, "usage: (\@ConnectionList) = ODBC_GetConnections()\n"],
     'usage error with an argument');
+
+my @init = (1, Win32::ODBC::ODBCInit('extra'));
+is_deeply(\@init, [1], 'ODBCInit returns nothing');

@@ -2498,8 +2498,10 @@ XS(XS_WIN32__ODBC_GetTypeInfo)
 
 XS(XS_WIN32__ODBC_ShutDown)
 {
-    //  dXSARGS;
+    dXSARGS;
+    SP -= items;
     TerminateThread();
+    PUTBACK;
 }
 
 void TerminateThread(){
@@ -2548,7 +2550,10 @@ void TerminateThread(){
 
 XS(XS_WIN32__ODBC_InitExtension)
 {
+    dXSARGS;
+    SP -= items;
     InitExtension();
+    PUTBACK;
 }
 
 int InitExtension(){
@@ -2557,9 +2562,14 @@ int InitExtension(){
     int iRetCode = 1;
 
 #if defined(__CYGWIN__) || defined(__MINGW32__)
-//  Otherwise, this is done in DllMain
-    InitializeCriticalSection(&gDCS);
-    InitializeCriticalSection(&gCS);
+//  Otherwise, this is done in DllMain. ODBCInit() runs this function again,
+//  and initializing a critical section twice is undefined behavior.
+    static BOOL bCriticalSectionsReady = FALSE;
+    if (!bCriticalSectionsReady){
+        InitializeCriticalSection(&gDCS);
+        InitializeCriticalSection(&gCS);
+        bCriticalSectionsReady = TRUE;
+    }
 #endif
 
     if (! ::cMom){
