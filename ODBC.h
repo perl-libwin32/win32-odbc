@@ -81,7 +81,7 @@ struct	ODBC_Conn{
 
 	#define	ReturnError(xx)																\
 		{ 																					\
-			char *szError = "No connections exist";											\
+			const char *szError = "No connections exist";											\
 			if (h){																			\
 				szError = h->Error->szError;												\
 			}																				\
@@ -137,12 +137,12 @@ struct	ODBC_Conn{
 ODBC_TYPE *NewODBC();
 ODBC_TYPE *CleanODBC(ODBC_TYPE *h);
 ODBC_TYPE * _NT_ODBC_Verify(int iODBC);
-ODBC_TYPE *ODBCError(char *szString, ODBC_TYPE *h, char *szFunction, char *szFunctionLevel);
+ODBC_TYPE *ODBCError(const char *szString, ODBC_TYPE *h, const char *szFunction, const char *szFunctionLevel);
 int DeleteConn(int iODBC);
-void _NT_ODBC_Error(ODBC_Conn * h, char *szFunction, char *szFunctionLevel);
+void _NT_ODBC_Error(ODBC_Conn * h, const char *szFunction, const char *szFunctionLevel);
 int FreeODBC(ODBC_TYPE *h);
 RETCODE ResetStmt(ODBC_TYPE *h);
-char *MapCloseType(UWORD uCloseType);
+const char *MapCloseType(UWORD uCloseType);
 void CleanError(ODBC_ERROR *h);
 int	ColNameToNum(ODBC_TYPE *h, char *szName);
 // void ReturnError(ODBC_TYPE *h);
