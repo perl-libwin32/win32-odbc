@@ -2498,8 +2498,10 @@ XS(XS_WIN32__ODBC_GetTypeInfo)
 
 XS(XS_WIN32__ODBC_ShutDown)
 {
-    //  dXSARGS;
+    dXSARGS;
+    SP -= items;
     TerminateThread();
+    PUTBACK;
 }
 
 void TerminateThread(){
@@ -2548,7 +2550,10 @@ void TerminateThread(){
 
 XS(XS_WIN32__ODBC_InitExtension)
 {
+    dXSARGS;
+    SP -= items;
     InitExtension();
+    PUTBACK;
 }
 
 int InitExtension(){
