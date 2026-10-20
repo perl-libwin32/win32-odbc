@@ -29,3 +29,4 @@ t/00-load.t
 t/01-xsub-stack.t
 t/02-shutdown.t
 t/03-threads.t
+t/04-disconnect.t

@@ -562,7 +562,8 @@ int DeleteConn(int iODBC){
     ODBC_TYPE   *h = 0;
     int iResult = 0;
 
-    if(::cMom){
+//  ID 0 is the thread's default object, which error paths fall back to.
+    if(::cMom && iODBC){
         CMom    *cmDaughter = 0;
         if ((cmDaughter = (CMom *) ::cMom->operator[](GetCurrentThreadId()))){
             if ((h = (ODBC_TYPE *) cmDaughter->operator[]((DWORD)iODBC))){
@@ -909,7 +910,7 @@ XS(XS_WIN32__ODBC_GetError)
 }
           
 
-XS(XS_WIN32__ODBC_Disconnect) // usage: ODBC_Disconnect($conn) or ODBC_Disconnect() for all
+XS(XS_WIN32__ODBC_Disconnect) // usage: ODBC_Disconnect($conn)
 {
     dXSARGS;
     ODBC_TYPE *h;
