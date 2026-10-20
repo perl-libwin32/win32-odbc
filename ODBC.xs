@@ -28,6 +28,11 @@
 #include <math.h>   // VC-5.0 brainmelt
 #include <windows.h>
 #include <stdio.h>
+#ifdef __CYGWIN__
+#   include <strings.h>
+#   define stricmp  strcasecmp
+#   define strnicmp strncasecmp
+#endif
     
     //  ODBC Stuff
 #include <sql.h>
