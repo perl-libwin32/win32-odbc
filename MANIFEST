@@ -6,6 +6,7 @@ Changes
 Constant.cpp
 Constant.h
 HISTORY.TXT
+LICENSE
 MANIFEST
 META.yml
 Makefile.PL
@@ -17,6 +18,7 @@ ODBCTEST.MDB
 ODBCbuild.h
 Odbc.rc
 README.TXT
+README.md
 ROADMAP.TXT
 docs/object.html
 docs/odbc.html

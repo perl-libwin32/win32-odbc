@@ -1487,7 +1487,7 @@ Copyright (c) 1996-1998 Dave Roth. All rights reserved.
 
 Courtesy of Roth Consulting:  http://www.roth.net/consult/
 
-Use under GNU General Public License. Details can be found at:
-http://www.gnu.org/copyleft/gpl.html
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =cut
