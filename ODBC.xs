@@ -357,6 +357,15 @@ RETCODE ResetStmt(ODBC_TYPE *h){
     return iReturnCode;
 }
     
+//  Record which function, and which step in it, raised the error, truncating
+//  each name to fit its field.
+void SetErrorSource(ODBC_ERROR *Error, const char *szFunction, const char *szFunctionLevel){
+    strncpy(Error->szFunction, szFunction, sizeof(Error->szFunction) - 1);
+    Error->szFunction[sizeof(Error->szFunction) - 1] = '\0';
+    strncpy(Error->szFunctionLevel, szFunctionLevel, sizeof(Error->szFunctionLevel) - 1);
+    Error->szFunctionLevel[sizeof(Error->szFunctionLevel) - 1] = '\0';
+}
+
     /*
         Process an ODBC structures error state from the ODBC API.
         This is called when an error is encountered via the ODBC API.
@@ -378,8 +387,7 @@ void _NT_ODBC_Error(ODBC_TYPE * h, const char *szFunction, const char *szFunctio
     if (!h->Error->ErrNum){
         h->Error->ErrNum = 911;
     }
-    strcpy(h->Error->szFunction, szFunction);
-    strcpy(h->Error->szFunctionLevel, szFunctionLevel);
+    SetErrorSource(h->Error, szFunction, szFunctionLevel);
 
 #ifdef _DEBUG
     if (giDebug){
@@ -402,8 +410,7 @@ ODBC_TYPE *ODBCError(const char *szString, ODBC_TYPE *h, const char *szFunction,
     if (h){
         h->Error->ErrNum = 911;
         strcpy(h->Error->szError, szString);
-        strcpy(h->Error->szFunction, szFunction);
-        strcpy(h->Error->szFunctionLevel, szFunctionLevel);
+        SetErrorSource(h->Error, szFunction, szFunctionLevel);
     }
 
 #ifdef _DEBUG
@@ -701,7 +708,7 @@ XS(XS_WIN32__ODBC_Connect) // ODBC_Connect(Connection string: input) returns con
                     }
                     retcode = SQLSetConnectOption(h->hdbc->hdbc, uType, udValue);
                     if (retcode != SQL_SUCCESS){
-                        sprintf(szError, "2a: Connect Item number %i", (iTemp/2));
+                        sprintf(szError, "2a:%i", (iTemp/2));
                         _NT_ODBC_Error(h, "ODBC_Connect", szError);
                         break;
                     }
