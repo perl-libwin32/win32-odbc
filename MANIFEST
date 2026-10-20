@@ -24,7 +24,6 @@ docs/object.html
 docs/odbc.html
 eg/sample.pl
 hints/cygwin.pl
-ppport.h
 resource.h
 t/00-load.t
 t/01-xsub-stack.t
