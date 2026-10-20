@@ -30,13 +30,9 @@
 #include <stdio.h>
     
     //  ODBC Stuff
-#ifdef __CYGWIN__
-#   include <iodbcinst.h>
-#else
-#   include <sql.h>
-#   include <sqlext.h>
-#   include <odbcinst.h>
-#endif
+#include <sql.h>
+#include <sqlext.h>
+#include <odbcinst.h>
     //  Win32 Perl Stuff
 #if defined(__cplusplus)
 extern "C" {
