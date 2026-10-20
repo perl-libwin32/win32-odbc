@@ -191,8 +191,8 @@ SWORD CResults::NumOfCols(){
 	return sNumOfCols;
 }
 
-char *CResults::operator[](int iElement){;
-	char	*szReturn = 0;
+const char *CResults::operator[](int iElement){;
+	const char	*szReturn = 0;
 	
 	if (iElement >= 0 && iElement <= sNumOfCols){
 		switch(dReturnSize[iElement]){

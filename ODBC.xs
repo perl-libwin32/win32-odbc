@@ -362,7 +362,7 @@ RETCODE ResetStmt(ODBC_TYPE *h){
         This is called when an error is encountered via the ODBC API.
     */
 
-void _NT_ODBC_Error(ODBC_TYPE * h, char *szFunction, char *szFunctionLevel){
+void _NT_ODBC_Error(ODBC_TYPE * h, const char *szFunction, const char *szFunctionLevel){
     SDWORD cbErrorMsg;
 
     if(!h){
@@ -395,7 +395,7 @@ void _NT_ODBC_Error(ODBC_TYPE * h, char *szFunction, char *szFunctionLevel){
         but from this body of code.
     */
 
-ODBC_TYPE *ODBCError(char *szString, ODBC_TYPE *h, char *szFunction, char * szFunctionLevel){
+ODBC_TYPE *ODBCError(const char *szString, ODBC_TYPE *h, const char *szFunction, const char * szFunctionLevel){
     if (!h){
         h = ODBCLIST;
     }
@@ -569,8 +569,8 @@ int DeleteConn(int iODBC){
         Map an Stmt close type string to the actual Stmt close type value.
     */
 
-char *MapCloseType(UWORD uCloseType){
-    char *szType;
+const char *MapCloseType(UWORD uCloseType){
+    const char *szType;
 
     switch(uCloseType){
         case SQL_DONT_CLOSE:
@@ -1382,7 +1382,7 @@ XS(XS_WIN32__ODBC_GetStmtCloseType)
 {
     dXSARGS;
     ODBC_TYPE * h;
-    char    *szType;
+    const char    *szType;
 
     if(items != 1){
         CROAK("usage: ($Err, $Type) = ODBC_GetStmtCloseType($Connection)\n");
@@ -1409,7 +1409,7 @@ XS(XS_WIN32__ODBC_SetStmtCloseType)
 {
     dXSARGS;
     ODBC_TYPE * h;
-    char    *szType;
+    const char    *szType;
     UWORD   uType;      
     
     if(items != 2){
@@ -2352,7 +2352,7 @@ XS(XS_WIN32__ODBC_GetStats)
     ODBC_TYPE * h;
     int iTemp = 0;
     CMom    *cDaughter = 0;
-    char    *Keys[] = {  "TotalActiveThreads",          //  Total number of threads attached to this dll
+    const char    *Keys[] = {  "TotalActiveThreads",          //  Total number of threads attached to this dll
                          "TotalActiveODBCThreads",      //  Total num of threads with ODBC connections
                          "TotalActiveDebugConnections", //  Total number of active connections with active debugging
                          "TotalHistoryThreads",         //  Total history of threads that have connected to odbc connections
@@ -2443,7 +2443,7 @@ XS(XS_WIN32__ODBC_GetTypeInfo)
     ODBC_TYPE * h;
     SWORD   sType;
     RETCODE retcode= 0;
-    char    *szCommand = "GetTypeInfo()";
+    const char    *szCommand = "GetTypeInfo()";
     
     if(items != 2){
         CROAK("usage: ($Err, $NumValue, $Value) = ODBC_GetTypeInfo($Connection, $Type)\n");
@@ -2594,7 +2594,7 @@ extern "C"
 XS(boot_Win32__ODBC)
 {
     dXSARGS;
-    char* file = __FILE__;
+    const char* file = __FILE__;
     RETCODE iRetCode = 1;
 
 #ifdef _DEBUG
