@@ -527,8 +527,8 @@ int ColNameToNum(ODBC_TYPE *h, char *szName){
     /*
         Check if the specified connection is valid and return the pointer
         to the ODBC structure.
-        Return a pointer to the master list (ODBCLIST) and genereate an error if
-        there is no valid connection.
+        For an ID with no connection, return the thread's default object
+        (ODBCLIST) and leave the error to NoSuchConn().
     */
 ODBC_TYPE * _NT_ODBC_Verify(int iODBC){
     CMom    *cmDaughter = 0;
@@ -788,7 +788,7 @@ XS(XS_WIN32__ODBC_Execute) // ODBC_Execute($connection, $sql_text) returns (0,@f
     
     SP -= items;
 
-    if (h != ODBCLIST){
+    if (! NoSuchConn(h, "ODBC_Execute")){
         szSQL = SvPV(ST(1), n_a);            // get SQL string
             //  Do we really want to resetsmtm now? 
         if (ResetStmt(h) == SQL_SUCCESS){
@@ -863,7 +863,7 @@ XS(XS_WIN32__ODBC_Fetch) // ODBC_Fetch($connection) returns (0,@dataelements) or
                      
     SP -= items;
 
-    if (h != ODBCLIST){
+    if (! NoSuchConn(h, "ODBC_Fetch")){
         SQLGetStmtOption(h->hstmt, SQL_ROWSET_SIZE, &dRowSetSize);
 //  SQLSetStmtOption(h->hstmt, SQL_ROWSET_SIZE, 1);
         if (!(rgfRowStatus = new UWORD [dRowSetSize])){
@@ -1032,7 +1032,7 @@ RETCODE TableColList(pTHX_ I32 ax, I32 items, int iType){
     
     SP -= items;
 
-    if (h != ODBCLIST){
+    if (! NoSuchConn(h, "ODBC_TableColList")){
         CleanError(h->Error);
         retcode = ResetStmt(h);
         if (h->szCommand){
@@ -1109,7 +1109,7 @@ XS(XS_WIN32__ODBC_MoreResults)  // usage: ODBC_MoreResults($conn)
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
     SP -= items;
-    if (h != ODBCLIST){
+    if (! NoSuchConn(h, "ODBC_MoreResults")){
         retcode = SQLMoreResults(h->hstmt);
         if((retcode != SQL_SUCCESS) && (retcode != SQL_SUCCESS_WITH_INFO)){
             _NT_ODBC_Error(h, "ODBC_MoreResults", "1");
@@ -1143,7 +1143,7 @@ XS(XS_WIN32__ODBC_MaxBufSize)
     CleanError(h->Error);
     SP -= items;
 
-    if (h != ODBCLIST){
+    if (! NoSuchConn(h, "ODBC_MaxBufSize")){
         if (items > 1){
             iSize = SvIV(ST(1));
             iSize = ((iSize <= 0)? 0:iSize);
