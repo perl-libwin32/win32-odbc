@@ -32,3 +32,4 @@ t/03-threads.t
 t/04-disconnect.t
 t/05-connect.t
 t/06-no-connection.t
+t/07-config-dsn.t

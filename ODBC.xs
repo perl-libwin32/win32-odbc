@@ -1836,13 +1836,18 @@ XS(XS_WIN32__ODBC_ConfigDSN)
         */
 
     if (! h->Error->ErrNum){
+        if (! szAttributes){
+                //  An empty attribute list is just the two NULs that end any list.
+            szAttributes = new char [2];
+            szAttributes[0] = szAttributes[1] = '\0';
+        }
         if(strcspn(szAttributes, "[]{}(),?*!@") < strlen(szAttributes)){
             ODBCError("Illegal use of reserved characters []{}(),?*!@", h, "ODBC_ConfigDSN", "3");
         }
 
                 //  Format Attribute list for the ConfigDataSource function...
                 //  attrib1=value1\0attrib2=value2\0attrib3=value3\0\0
-        for (;iSize > -1; iSize--){
+        for (iSize = strlen(szAttributes); iSize > -1; iSize--){
             if (szAttributes[iSize] == ';'){
                 szAttributes[iSize] = '\0';
             }
