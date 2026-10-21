@@ -13,7 +13,7 @@ my @conns = (1, Win32::ODBC::ODBCGetConnections());
 is_deeply(\@conns, [1, 0], 'GetConnections lists only the default connection');
 
 my @bufsize = (1, Win32::ODBC::ODBCGetMaxBufSize(999));
-is_deeply(\@bufsize, [1, 1, 0, ''], 'GetMaxBufSize on a missing connection');
+is_deeply(\@bufsize, [1, 1, 911, 'No such connection'], 'GetMaxBufSize on a missing connection');
 
 my @usage = (1, Win32::ODBC::ODBCRowCount());
 is_deeply(\@usage, [1, 999, "usage: (\$Err, \$NumOfRows) = ODBC_RowCount(\$Connection)\n"],

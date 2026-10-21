@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 17;
+use Test::More tests => 24;
 use Win32::ODBC;
 
 # Every XSUB that needs a connection must report an ID with no connection as
@@ -22,6 +22,16 @@ my @calls = (
     [SetCursorName    => 'c1'],
     [GetData          => ()],
     [GetDSN           => ()],
+    # Fetch keeps the previous call's error, so an unguarded Fetch right
+    # after GetDSN would return GetDSN's error and pass. Execute, which
+    # clears it, runs between them.
+    [Execute          => 'SELECT 1'],
+    [Fetch            => ()],
+    [MoreResults      => ()],
+    [TableList        => '', '', '%', 'TABLE'],
+    [ColumnList       => '', '', '', ''],
+    [GetMaxBufSize    => ()],
+    [SetMaxBufSize    => 1024],
 );
 
 for my $call (@calls) {
