@@ -595,6 +595,18 @@ ODBC_TYPE *DropFailedConn(ODBC_TYPE *h){
     return hDefault;
 }
 
+//  _NT_ODBC_Verify() returns the thread's default object, which has no HDBC,
+//  for an ID with no connection. If h is that object, set a "No such
+//  connection" error on it and return 1.
+int NoSuchConn(ODBC_TYPE *h, const char *szFunction){
+    if (h != ODBCLIST){
+        return 0;
+    }
+    CleanError(h->Error);
+    ODBCError("No such connection", h, szFunction, "0");
+    return 1;
+}
+
 
 
     /*
@@ -1212,7 +1224,9 @@ XS(XS_WIN32__ODBC_GetDSN)
     SP -= items;
 
     szTemp = szDSN;
-    if (! (szDSN = new char [strlen(szTemp) + 1])){
+    if (! szTemp && NoSuchConn(h, "ODBC_GetDSN")){
+            //  ReturnError() below reports it.
+    }else if (! (szDSN = new char [strlen(szTemp) + 1])){
         szDSN = 0;
         ODBCError("Could not allocate memory for DSN comparison", h, "ODBC_GetDSN", "1");
     }else{
@@ -1485,6 +1499,7 @@ XS(XS_WIN32__ODBC_SetConnectOption)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_SetConnectOption");
     uType = (UWORD)SvIV(ST(1));
     if (SvIOKp(ST(2)) || SvNOKp(ST(2))){
         udValue = SvIV(ST(2));
@@ -1527,6 +1542,7 @@ XS(XS_WIN32__ODBC_GetConnectOption)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_GetConnectOption");
     uOption = (UWORD)SvIV(ST(1));
     SP -= items;
 
@@ -1585,6 +1601,7 @@ XS(XS_WIN32__ODBC_StmtOption)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_StmtOption");
     uOption = (UWORD)SvIV(ST(1));
     if (items > 2){
         if (SvIOKp(ST(2)) || SvNOKp(ST(2))){
@@ -1673,6 +1690,9 @@ XS(XS_WIN32__ODBC_GetFunctions)
         uOption = (UWORD)SvIV(ST(1));
     }
 
+    if (NoSuchConn(h, "ODBC_GetFunctions")){
+        items = 0;
+    }
     while(items--){
         rResult = SQLGetFunctions(h->hdbc->hdbc, uOption, &uOutput[iTemp]);
         if (rResult != SQL_SUCCESS){
@@ -1722,6 +1742,7 @@ XS(XS_WIN32__ODBC_Transact)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_Transact");
     uType = (UWORD)SvIV(ST(1));
     SP -= items;
 
@@ -1864,6 +1885,7 @@ XS(XS_WIN32__ODBC_GetInfo)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_GetInfo");
     uType = (UWORD)SvIV(ST(1));
     SP -= items;
 
@@ -2094,6 +2116,7 @@ XS(XS_WIN32__ODBC_SetPos)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_SetPos");
     uRow    = (UWORD)SvIV(ST(1));
     if (items > 2){
         uOption = (UWORD)SvIV(ST(2));
@@ -2137,6 +2160,7 @@ XS(XS_WIN32__ODBC_GetData)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_GetData");
     
     SP -= items;
     
@@ -2213,6 +2237,7 @@ XS(XS_WIN32__ODBC_DropCursor)
         uCloseSpecified = (UWORD)SvIV(ST(1));  
     }
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_DropCursor");
     SP -= items;
 
     if(!h->Error->ErrNum){
@@ -2246,6 +2271,7 @@ XS(XS_WIN32__ODBC_CursorName)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_CursorName");
 
     SP -= items;
 
@@ -2305,7 +2331,9 @@ XS(XS_WIN32__ODBC_Clone) // ODBC_Connect(Connection string: input) returns conne
     SP -= items;
 
             //  Allocate new ODBC connection
-    if (!(h = NewODBC())){
+    if (NoSuchConn(hOld, "ODBC_Clone")){
+        h = hOld;
+    }else if (!(h = NewODBC())){
         h = ODBCError("Could not allocate memory of an ODBC connection\n", (ODBC_TYPE *)0, "ODBC_Clone", "1");
     }else{
             //  Copy info from the Cloned ODBC connection
@@ -2463,6 +2491,7 @@ XS(XS_WIN32__ODBC_GetTypeInfo)
 
     h = _NT_ODBC_Verify(SvIV(ST(0)));
     CleanError(h->Error);
+    NoSuchConn(h, "ODBC_GetTypeInfo");
     sType = (SWORD)SvIV(ST(1));
     SP -= items;
 

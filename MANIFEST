@@ -31,3 +31,4 @@ t/02-shutdown.t
 t/03-threads.t
 t/04-disconnect.t
 t/05-connect.t
+t/06-no-connection.t
