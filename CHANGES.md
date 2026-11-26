@@ -1,5 +1,9 @@
 # Revision history for Win32::ODBC
 
+## 0.038 [2026-11-26]
+
+- Fix the Visual C++ build on perls that use the Universal CRT, where the link failed on `_vsnwprintf_s`, and on perls whose archlib path has forward slashes, such as conda-forge's, where the xsubpp step failed [#19](https://github.com/perl-libwin32/win32-odbc/pull/19)
+
 ## 0.037 [2026-10-21]
 
 - Fix crashes after `ODBCShutDown()`, in ithreads started after `use Win32::ODBC`, and after `ODBCDisconnect()` with no argument or with 0 [#12](https://github.com/perl-libwin32/win32-odbc/pull/12)
