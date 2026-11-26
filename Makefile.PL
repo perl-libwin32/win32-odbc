@@ -31,6 +31,17 @@ sub const_loadlibs {
 	$self->{LDLOADLIBS} .= " -lodbccp32";
 
     }
+    # odbccp32.lib is not a plain import library. Its functions load
+    # odbccp32.dll at run time, and the code that loads it calls
+    # _vsnwprintf_s. With a UCRT perl, ucrt.lib doesn't export that
+    # function, so it has to come from legacy_stdio_definitions.lib.
+    # That library in turn needs legacy_stdio_wide_specifiers.lib and
+    # adds it as a default library. But perl links extensions with
+    # -nodefaultlib, which ignores default libraries, so the link fails
+    # unless both are listed here.
+    if ($Config{cc} =~ /^cl/i && $Config{libc} =~ /^ucrt/i) {
+	$self->{LDLOADLIBS} .= " legacy_stdio_definitions.lib legacy_stdio_wide_specifiers.lib";
+    }
     return $self->SUPER::const_loadlibs;
 }
 
